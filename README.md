@@ -177,4 +177,4 @@ Databricks Free Edition (serverless) · Unity Catalog · Delta Lake · PySpark �
 
 ---
 
-**Author:** Nahuel — Data Engineer · [LinkedIn](https://www.linkedin.com/in/your-profile)
+**Author:** Nahuel — Data Engineer · [LinkedIn](https://www.linkedin.com/in/nahuel-mart%C3%ADnez-77161827b/)
