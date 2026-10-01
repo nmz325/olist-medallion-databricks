@@ -116,9 +116,14 @@ GMV was calculated from two independent fact tables and compared against payment
 | Model | ROC-AUC | PR-AUC | Recall | Precision |
 |---|---|---|---|---|
 | Logistic regression (baseline) | 0.692 | 0.259 | 0.377 | 0.277 |
-| **HistGradientBoosting** | **0.701** | **0.328** | **0.421** | **0.310** |
+| **HistGradientBoosting (final model)** | **0.701** | **0.328** | **0.421** | **0.310** |
+| HistGradientBoosting (tuned) | 0.706 | 0.328 | 0.421 | 0.310 |
+| Random Forest | 0.700 | 0.319 | 0.408 | 0.318 |
 
-The gradient boosting model wins on every metric. Its PR-AUC is about 2.5x the baseline rate of bad reviews.
+- **The three tree-based models converge** at ~0.70 ROC-AUC and ~0.32–0.33 PR-AUC, well above logistic regression. The relationship is non-linear, and the current features set the ceiling, not the algorithm.
+- **Hyperparameter tuning** (RandomizedSearchCV, 20 candidates, temporal cross-validation) did not improve test PR-AUC, so the simpler default model was kept.
+- **Cross-validation PR-AUC (0.52) is much higher than test (0.33).** The validation folds cover the early-2018 logistics crisis, when bad reviews were mostly delay-driven and easier to predict. The data shifts over time, so a model like this needs monitoring and retraining.
+- PR-AUC is about 2.5x the baseline rate of bad reviews.
 
 ![Feature importance](Feature_importance.png)
 
@@ -130,7 +135,9 @@ The gradient boosting model wins on every metric. Its PR-AUC is about 2.5x the b
 
 ![Confusion matrix](Confusion_matrix.png)
 
-The model correctly classifies 90% of good reviews and detects 42% of bad ones. It is best at flagging **logistics-driven** bad reviews — exactly the ones the business can prevent. Remaining misses likely come from causes not in the data (product quality, wrong item).
+**Decision threshold.** At 0.50 the model correctly classifies 90% of good reviews and detects 42% of bad ones. The threshold that maximizes F1 on validation is about 0.70: recall drops to ~29%, but precision rises to ~47%, so almost half of the flagged orders end in a bad review (about 3.5x better than random). Overall balance is the same (F1 ≈ 0.36), so the choice is a business decision: 0.50 for cheap automated actions such as an email or a small voucher, 0.70 when each alert triggers a costly manual follow-up.
+
+The model is best at flagging **logistics-driven** bad reviews, which are exactly the ones the business can prevent. Remaining misses likely come from causes not in the data (product quality, wrong item).
 
 ---
 
@@ -177,4 +184,4 @@ Databricks Free Edition (serverless) · Unity Catalog · Delta Lake · PySpark �
 
 ---
 
-**Author:** Nahuel — Data Engineer · [LinkedIn](https://www.linkedin.com/in/nahuel-mart%C3%ADnez-77161827b/)
+**Author:** Nahuel — Data Engineer · [LinkedIn](https://www.linkedin.com/in/your-profile)
