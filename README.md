@@ -209,32 +209,32 @@ Six static charts built with **matplotlib** in [`06_visual_insights`](06_visual_
 ### Orders over time
 How did demand evolve, and how big was the Black Friday peak compared with a normal day?
 
-![Daily orders over time](Orders_over_time.png)
+![Daily orders over time](g1_daily_orders.png)
 
 ### When do customers buy?
 Orders by weekday and hour of purchase — useful to schedule campaigns, customer service shifts and maintenance windows.
 
-![Orders by weekday and hour](Orders_heatmap.png)
+![Orders by weekday and hour](g2_orders_by_weekday.png)
 
 ### Delivery time across Brazil
 A map built only from customer coordinates (no shapefiles): each hexagon shows the average delivery time of the orders inside it.
 
-![Delivery time across Brazil](Delivery_map.png)
+![Delivery time across Brazil](g3_delivery_time_across_brasil.png)
 
 ### Review scores by delivery delay
 The full 1–5 star distribution instead of a single average: how fast satisfaction collapses once an order is late.
 
-![Review scores by delivery delay](Reviews_by_delay.png)
+![Review scores by delivery delay](g4_scores_by_delay.png)
 
 ### Seller concentration
 A Pareto curve: what share of GMV the biggest sellers generate, and how dependent the marketplace is on a few key accounts.
 
-![Seller concentration](Seller_concentration.png)
+![Seller concentration](g5_seller_concentration.png)
 
 ### Product categories: late deliveries vs reviews
 Each bubble is a category with 500+ delivered orders (size = GMV). Orders are counted once per category, so multi-item orders do not inflate the averages.
 
-![Late deliveries vs review score by category](Categories_late_vs_review.png)
+![Late deliveries vs review score by category](g6_late_deliveries_vs_score_by_product_category.png)
 
 ---
 
