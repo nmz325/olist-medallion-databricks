@@ -185,6 +185,7 @@ The model is best at flagging **logistics-driven** bad reviews, which are exactl
 | [03_gold.ipynb](03_gold.ipynb) | Star schema, KPI tables, PK/FK constraints and reconciliation queries |
 | [05_quality_checks.ipynb](05_quality_checks.ipynb) | 11 data quality checks, results history in `gold.dq_results`, fails the Job on error |
 | [04_ML_bad_reviews.ipynb](04_ML_bad_reviews.ipynb) | Feature table, model comparison, tuning, threshold selection and interpretation |
+| [06_visual_insights.ipynb](06_visual_insights.ipynb) | Six matplotlib charts on silver and gold, saved as PNGs to a Unity Catalog volume |
 
 ## How to reproduce
 
@@ -193,10 +194,47 @@ The model is best at flagging **logistics-driven** bad reviews, which are exactl
 3. Import the notebooks and run them in order: **01 → 02 → 03 → 05 → 04**. Notebook 04 installs its own dependencies (`seaborn`, `scikit-learn`, `mlflow`).
 4. Build the AI/BI dashboard on top of the gold tables (see screenshots above).
 5. Optional: create a Lakeflow Job with one notebook task per step, in the order shown in [Orchestration and data quality](#orchestration-and-data-quality), plus a dashboard task after the quality checks.
+6. Optional: run `06_visual_insights` after gold to generate the charts below.
 
 ## Tech stack
 
 Databricks Free Edition (serverless) · Unity Catalog · Delta Lake · Lakeflow Jobs · PySpark · Spark SQL · AI/BI Dashboards · pandas · scikit-learn · MLflow · Matplotlib · Seaborn
+
+---
+
+## Visual insights
+
+Six static charts built with **matplotlib** in [`06_visual_insights`](06_visual_insights.ipynb). They complement the dashboard with views a BI tool does not do well. Aggregations run in Spark SQL, only small result sets go to pandas, and every subtitle is computed from the data.
+
+### Orders over time
+How did demand evolve, and how big was the Black Friday peak compared with a normal day?
+
+![Daily orders over time](Orders_over_time.png)
+
+### When do customers buy?
+Orders by weekday and hour of purchase — useful to schedule campaigns, customer service shifts and maintenance windows.
+
+![Orders by weekday and hour](Orders_heatmap.png)
+
+### Delivery time across Brazil
+A map built only from customer coordinates (no shapefiles): each hexagon shows the average delivery time of the orders inside it.
+
+![Delivery time across Brazil](Delivery_map.png)
+
+### Review scores by delivery delay
+The full 1–5 star distribution instead of a single average: how fast satisfaction collapses once an order is late.
+
+![Review scores by delivery delay](Reviews_by_delay.png)
+
+### Seller concentration
+A Pareto curve: what share of GMV the biggest sellers generate, and how dependent the marketplace is on a few key accounts.
+
+![Seller concentration](Seller_concentration.png)
+
+### Product categories: late deliveries vs reviews
+Each bubble is a category with 500+ delivered orders (size = GMV). Orders are counted once per category, so multi-item orders do not inflate the averages.
+
+![Late deliveries vs review score by category](Categories_late_vs_review.png)
 
 ---
 
