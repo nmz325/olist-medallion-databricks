@@ -29,6 +29,72 @@ flowchart LR
 
 ### Gold data model
 
+```mermaid
+erDiagram
+    dim_customer ||--o{ fact_orders : "customer_unique_id"
+    dim_customer ||--o{ fact_sales : "customer_unique_id"
+    dim_date ||--o{ fact_orders : "date_key"
+    dim_date ||--o{ fact_sales : "date_key"
+    dim_seller ||--o{ fact_sales : "seller_id"
+    dim_product ||--o{ fact_sales : "product_id"
+    dim_date ||..o{ fact_payments : "date_key"
+    fact_orders ||..o{ fact_sales : "order_id"
+    fact_orders ||..o{ fact_payments : "order_id"
+
+    dim_customer {
+        string customer_unique_id PK
+        string state
+        double lat
+        double lng
+        boolean is_repeat_customer
+    }
+    dim_seller {
+        string seller_id PK
+        string state
+        double lat
+        double lng
+    }
+    dim_product {
+        string product_id PK
+        string category
+        int weight_g
+        int volume_cm3
+    }
+    dim_date {
+        date date_key PK
+        int year
+        int month
+        boolean is_weekend
+    }
+    fact_sales {
+        string order_id
+        int order_item_id
+        string customer_unique_id FK
+        string seller_id FK
+        string product_id FK
+        date date_key FK
+        decimal total_value
+    }
+    fact_orders {
+        string order_id PK
+        string customer_unique_id FK
+        date date_key FK
+        decimal order_value
+        int delivery_delay_days
+        int review_score
+    }
+    fact_payments {
+        string order_id
+        int payment_sequential
+        date date_key
+        string payment_type
+        int installments
+        decimal payment_value
+    }
+```
+
+*Solid lines are declared FK constraints; dotted lines are logical joins on `order_id` and `date_key`. Only the key columns and a few measures are shown.*
+
 | Table | Grain (one row per…) | Purpose |
 |---|---|---|
 | `dim_customer` | real customer (`customer_unique_id`) | Location, first purchase, repeat customer flag |
