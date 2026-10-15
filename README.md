@@ -1,6 +1,6 @@
 # Olist E-commerce – Medallion Lakehouse on Databricks
 
-End-to-end data project on **Databricks Free Edition**: raw CSVs are ingested into a **bronze → silver → gold** medallion architecture, modeled as a **star schema**, reconciled to the cent, gated by **automated data quality checks**, orchestrated with a **Lakeflow Job**, visualized in an **AI/BI dashboard**, and used to train a **machine learning model** that predicts bad customer reviews at delivery time.
+End-to-end data project on **Databricks Free Edition**: raw CSVs are ingested into a **bronze → silver → gold** medallion architecture, modeled as a **star schema**, reconciled to the cent, gated by **automated data quality checks**, orchestrated with a **Lakeflow Job**, visualized in an **AI/BI dashboard**, and used to train a **machine learning model** that predicts bad customer reviews at delivery time, later improved through **leakage-safe feature engineering**.
 
 **Dataset:** [Brazilian E-Commerce Public Dataset by Olist](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) (Kaggle) — ~100K real orders from 2016–2018 across 9 related tables. Amounts are in Brazilian reais (R$).
 
@@ -19,6 +19,7 @@ flowchart LR
     Q -->|pass| E[AI/BI Dashboard]
     Q -->|pass| F[Feature table]
     F --> G[ML model<br/>scikit-learn + MLflow]
+    G --> H[Feature engineering<br/>ablation + seller history]
 ```
 
 | Layer | Tables | What happens |
@@ -124,7 +125,7 @@ erDiagram
 The pipeline runs as a **Lakeflow Job** (`olist_medallion_pipeline`) with one task per notebook:
 
 ```
-01_bronze → 02_Silver → 03_gold → 05_quality_checks ─┬→ 04_ML_bad_reviews
+01_bronze → 02_Silver → 03_gold → 05_quality_checks ─┬→ 04_ML_bad_reviews → 07_feature_engineering
                                                      └→ dashboard refresh
 ```
 
@@ -242,6 +243,36 @@ The model is best at flagging **logistics-driven** bad reviews, which are exactl
 
 ---
 
+## Feature engineering: breaking the model's ceiling
+
+Three different algorithms hit the same ceiling, so the next step was better **features**, not a better algorithm. [`07_feature_engineering`](07_feature_engineering.ipynb) builds `gold.ml_features_bad_review_v2` with **13 new features in 5 groups** and measures what each group adds with an **ablation study**: same split, same model, one group at a time.
+
+| Group | New features |
+|---|---|
+| Seller history | `seller_past_bad_rate`, `seller_past_late_rate`, `seller_past_reviews`, `seller_tenure_days` |
+| Seller shipped late | `seller_shipped_late` (carrier pickup after the shipping deadline) |
+| Regional logistics | `state_late_rate_30d` (late-delivery rate in the customer's state, previous 30 days) |
+| Purchase calendar | `purchase_month`, `purchase_dow`, `purchase_hour` |
+| Product attributes | `photos_qty`, `description_length`, `weight_g`, `volume_cm3` |
+
+**No leakage, by construction:** every feature uses only what was known **before the order was delivered** (a seller's bad-review rate counts only reviews answered before that moment), and an automated check fails the notebook if this is violated. Seller rates are smoothed toward the training average so a new seller with one review is not scored as 0% or 100%.
+
+![What each feature group adds](g7_feature_groups_pr_auc.png)
+
+| Model | ROC-AUC | PR-AUC | Recall* | Precision* | F1* |
+|---|---|---|---|---|---|
+| Base (04 features) | 0.700 | 0.326 | 29.3% | 46.8% | 0.360 |
+| **+ Seller history (selected)** | **0.726** | **0.340** | **31.2%** | 45.2% | **0.369** |
+| All 13 features | 0.728 | 0.338 | 27.9% | 47.9% | 0.353 |
+
+*Test set, at the threshold chosen on validation for each model (0.68–0.70).
+
+- **Only seller history adds real signal:** +0.015 PR-AUC, confirmed by a 300-sample bootstrap (95% interval [+0.010, +0.019], entirely above zero). It explains all of the full model's gain with 4 features instead of 13, so the simpler model is kept.
+- **Correlated is not the same as useful.** Late dispatch (24% vs 12% bad reviews) and regional congestion (20% vs 9%) are strongly related to bad reviews, yet add nothing to the model: they are *causes* of delay, and the model already knows the actual delay. Seller history adds information the delay does not explain (wrong or low-quality products, poor service).
+- `seller_past_bad_rate` becomes the **3rd most important feature**, behind delivery delay and number of items.
+
+---
+
 ## Notebooks
 
 | Notebook | What it does |
@@ -252,6 +283,7 @@ The model is best at flagging **logistics-driven** bad reviews, which are exactl
 | [05_quality_checks.ipynb](05_quality_checks.ipynb) | 11 data quality checks, results history in `gold.dq_results`, fails the Job on error |
 | [04_ML_bad_reviews.ipynb](04_ML_bad_reviews.ipynb) | Feature table, model comparison, tuning, threshold selection and interpretation |
 | [06_visual_insights.ipynb](06_visual_insights.ipynb) | Six matplotlib charts on silver and gold, saved as PNGs to a Unity Catalog volume |
+| [07_feature_engineering.ipynb](07_feature_engineering.ipynb) | 13 leakage-safe features, leakage test, ablation study, bootstrap significance test and feature importance |
 
 ## How to reproduce
 
@@ -261,6 +293,7 @@ The model is best at flagging **logistics-driven** bad reviews, which are exactl
 4. Build the AI/BI dashboard on top of the gold tables (see screenshots above).
 5. Optional: create a Lakeflow Job with one notebook task per step, in the order shown in [Orchestration and data quality](#orchestration-and-data-quality), plus a dashboard task after the quality checks.
 6. Optional: run `06_visual_insights` after gold to generate the charts below.
+7. Optional: run `07_feature_engineering` after notebook 04 (it extends the 04 feature table).
 
 ## Tech stack
 
