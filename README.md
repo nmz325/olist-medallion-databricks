@@ -271,6 +271,8 @@ Three different algorithms hit the same ceiling, so the next step was better **f
 - **Correlated is not the same as useful.** Late dispatch (24% vs 12% bad reviews) and regional congestion (20% vs 9%) are strongly related to bad reviews, yet add nothing to the model: they are *causes* of delay, and the model already knows the actual delay. Seller history adds information the delay does not explain (wrong or low-quality products, poor service).
 - `seller_past_bad_rate` becomes the **3rd most important feature**, behind delivery delay and number of items.
 
+![Feature importance of the selected model](g8_feature_importance_v2.png)
+
 ---
 
 ## Notebooks
